@@ -10,13 +10,12 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 
-# дев-данные: база, загрузки, том
+# дев-данные: база, загрузки (только в backend — НЕ трогаем frontend/src/data)
 backend/koord.db
 backend/koord.db-*
 *.sqlite3
-backend/uploads/
-backend/data/
-data/
+/backend/uploads/
+/backend/data/
 
 # --- Node / frontend ---
 node_modules/
