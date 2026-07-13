@@ -1,0 +1,33 @@
+# --- секреты и окружение ---
+.env
+.env.*
+!.env.example
+backend/.env
+
+# --- Python / backend ---
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# дев-данные: база, загрузки, том
+backend/koord.db
+backend/koord.db-*
+*.sqlite3
+backend/uploads/
+backend/data/
+data/
+
+# --- Node / frontend ---
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# --- редакторы / ОС ---
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log

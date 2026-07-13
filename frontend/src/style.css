@@ -1,0 +1,226 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ */
+/*  Бренд «Координаторство'26» — токены из Figma-брендборда            */
+/* ------------------------------------------------------------------ */
+
+@theme {
+  /* Сырая палитра бренда — всегда доступна как bg-purple, text-glow и т.д. */
+  --color-ink: #150c1c;
+  --color-paper: #f3f2f2;
+  --color-purple-deep: #441766;
+  --color-purple: #5612be;
+  --color-lavender: #a486ec;
+  --color-lavender-light: #b1aaff;
+  --color-glow: #dfabff;
+  --color-pink: #ff87ab;
+  --color-orange: #f58414;
+  --color-gold: #fccf50;
+
+  --font-display: 'Unbounded', system-ui, sans-serif;
+  --font-sans: 'Golos Text', system-ui, sans-serif;
+
+  /* Форма бренда — острые углы. Мягкость только у рисованных клякс. */
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+}
+
+/* Семантические токены темизации — следуют за светлой/тёмной темой */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-content: var(--content);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+}
+
+:root {
+  --canvas: #ecebf0;
+  --surface: #ffffff;
+  --surface-2: #f5f3f9;
+  --content: #150c1c;
+  --muted: #5a4d68;
+  --line: rgba(21, 12, 28, 0.1);
+  --accent: #5612be;
+  --accent-soft: rgba(86, 18, 190, 0.1);
+  --on-accent: #ffffff;
+  --grain-opacity: 0.05;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --canvas: #120a1a;
+  --surface: #1c1226;
+  --surface-2: #251732;
+  --content: #f3f2f2;
+  --muted: #b3a6c4;
+  --line: rgba(243, 242, 242, 0.12);
+  --accent: #b1aaff;
+  --accent-soft: rgba(177, 170, 255, 0.14);
+  --on-accent: #1a0f28;
+  --grain-opacity: 0.08;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --canvas: #120a1a;
+    --surface: #1c1226;
+    --surface-2: #251732;
+    --content: #f3f2f2;
+    --muted: #b3a6c4;
+    --line: rgba(243, 242, 242, 0.12);
+    --accent: #b1aaff;
+    --accent-soft: rgba(177, 170, 255, 0.14);
+    --on-accent: #1a0f28;
+    --grain-opacity: 0.08;
+    color-scheme: dark;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  База                                                               */
+/* ------------------------------------------------------------------ */
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--canvas);
+  color: var(--content);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.02;
+  margin: 0;
+  text-wrap: balance;
+}
+
+::selection {
+  background: var(--color-glow);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Фирменные приёмы                                                   */
+/* ------------------------------------------------------------------ */
+
+/* Неоновое лиловое свечение текста — на акцентах, дозированно */
+.glow-text {
+  text-shadow:
+    0 0 8px rgba(223, 171, 255, 0.9),
+    0 0 22px rgba(223, 171, 255, 0.55),
+    0 0 46px rgba(223, 171, 255, 0.35);
+}
+
+/* Сетчатый градиент — фон hero и пустых состояний */
+.mesh {
+  background-color: #5612be;
+  background-image:
+    radial-gradient(at 12% 18%, #dfabff 0px, transparent 50%),
+    radial-gradient(at 82% 12%, #ff87ab 0px, transparent 45%),
+    radial-gradient(at 88% 78%, #f58414 0px, transparent 45%),
+    radial-gradient(at 20% 88%, #b1aaff 0px, transparent 50%),
+    radial-gradient(at 55% 50%, #441766 0px, transparent 60%);
+}
+
+.mesh-soft {
+  background-color: #ece0fb;
+  background-image:
+    radial-gradient(at 10% 20%, rgba(223, 171, 255, 0.85) 0px, transparent 50%),
+    radial-gradient(at 85% 15%, rgba(255, 135, 171, 0.7) 0px, transparent 45%),
+    radial-gradient(at 80% 85%, rgba(252, 207, 80, 0.7) 0px, transparent 45%),
+    radial-gradient(at 25% 90%, rgba(177, 170, 255, 0.8) 0px, transparent 50%);
+}
+
+/* Зерно — тонкая плёнка поверх градиентов */
+.grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* Импульс-скролл на мобильных списках */
+.momentum {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Скелетон загрузки */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--content) 8%, transparent),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Появление экрана */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise {
+  animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

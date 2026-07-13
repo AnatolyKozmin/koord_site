@@ -1,0 +1,37 @@
+services:
+  koord26-backend:
+    build: ./backend
+    container_name: koord26-backend
+    restart: unless-stopped
+    environment:
+      SECRET_KEY: "${SECRET_KEY:?set SECRET_KEY in .env}"
+      DATABASE_URL: "sqlite:////app/data/koord.db"
+      UPLOAD_DIR: "/app/data/uploads"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@koord.ru}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}"
+      ADMIN_NAME: "${ADMIN_NAME:-Superadmin}"
+    volumes:
+      - koord26_data:/app/data
+    networks:
+      - koord26
+
+  koord26-frontend:
+    build: ./frontend
+    container_name: koord26-frontend
+    restart: unless-stopped
+    depends_on:
+      - koord26-backend
+    networks:
+      - koord26          # общение с backend по DNS-имени koord26-backend
+      - arkadium_shared  # чтобы edge-nginx видел koord26-frontend:80
+
+networks:
+  koord26:
+    driver: bridge
+  arkadium_shared:
+    external: true
+    name: arkadium_shared
+
+volumes:
+  koord26_data:
+    name: koord26_data

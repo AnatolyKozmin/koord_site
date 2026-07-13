@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+koord.db
+uploads/
+data/
+.env
