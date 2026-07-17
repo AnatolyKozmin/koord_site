@@ -100,7 +100,12 @@ docker run --rm -v koord26_data:/data -v "$PWD":/backup alpine \
 
 ## Заметки
 
-- `client_max_body_size` для домена в edge-nginx = 10M; загрузка картинок в
-  бэкенде ограничена 8 МБ — запас есть.
+- Загрузка видео (до 200 МБ) требует `client_max_body_size 210M;` в **двух**
+  местах: во фронт-контейнере (`frontend/nginx.conf`, уже в репо) и в edge-nginx
+  на сервере — в `~/infra/nginx.conf` в блоке `server_name koordinatorstvo2026.ru`
+  поставить `client_max_body_size 210M;` (было 10M) и применить
+  `docker exec arkadium-edge-nginx nginx -s reload`. Иначе edge вернёт 413 ещё
+  до нашего стека. Заодно там же стоит поднять `proxy_read_timeout`/
+  `proxy_send_timeout` до 300s, если загрузка по медленной сети обрывается.
 - Порты наружу не публикуются — только через edge-nginx.
 - Откат: вернуть строку `koord-hr-frontend`, `nginx -s reload`, поднять `~/otbor_k`.

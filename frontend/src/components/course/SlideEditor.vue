@@ -11,6 +11,7 @@ const props = defineProps({
 const emit = defineEmits(['remove', 'move-up', 'move-down'])
 
 const uploading = ref(false)
+const uploadProgress = ref(0)
 const uploadError = ref('')
 const showHomework = ref(!!props.slide.homework)
 
@@ -25,15 +26,20 @@ const types = [
   { key: 'video', label: 'Видео', icon: Video },
 ]
 
-async function onFile(e) {
+async function onFile(e, endpoint) {
   const file = e.target.files?.[0]
   if (!file) return
   uploadError.value = ''
   uploading.value = true
+  uploadProgress.value = 0
   try {
     const form = new FormData()
     form.append('file', file)
-    const { data } = await api.post('/media/image', form)
+    const { data } = await api.post(endpoint, form, {
+      onUploadProgress: (p) => {
+        if (p.total) uploadProgress.value = Math.round((p.loaded / p.total) * 100)
+      },
+    })
     props.slide.media_url = data.url
   } catch (err) {
     uploadError.value = err.response?.data?.detail || 'Не удалось загрузить'
@@ -110,7 +116,7 @@ async function onFile(e) {
             class="inline-flex cursor-pointer items-center gap-2 border border-line px-3 py-2 text-[14px] text-content transition-colors hover:bg-surface-2"
           >
             <Upload :size="16" /> {{ uploading ? 'Загрузка…' : slide.media_url ? 'Заменить' : 'Загрузить' }}
-            <input type="file" accept="image/*" class="hidden" @change="onFile" :disabled="uploading" />
+            <input type="file" accept="image/*" class="hidden" @change="onFile($event, '/media/image')" :disabled="uploading" />
           </label>
           <input
             v-model="slide.media_url"
@@ -130,11 +136,29 @@ async function onFile(e) {
 
       <!-- видео -->
       <template v-else>
-        <input
-          v-model="slide.media_url"
-          placeholder="Ссылка на видео (YouTube, VK, mp4…)"
-          class="w-full rounded-xs border border-line bg-surface px-3 py-2.5 text-[15px] text-content focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
-        />
+        <video
+          v-if="slide.media_url && !slide.media_url.includes('youtu')"
+          :src="slide.media_url"
+          controls
+          class="max-h-64 w-full border border-line bg-black"
+        ></video>
+        <div class="flex items-center gap-2">
+          <label
+            class="inline-flex cursor-pointer items-center gap-2 border border-line px-3 py-2 text-[14px] text-content transition-colors hover:bg-surface-2"
+            :class="uploading && 'pointer-events-none opacity-60'"
+          >
+            <Upload :size="16" />
+            {{ uploading ? `Загрузка… ${uploadProgress}%` : slide.media_url ? 'Заменить' : 'Загрузить' }}
+            <input type="file" accept="video/mp4,video/webm,video/quicktime" class="hidden" @change="onFile($event, '/media/video')" :disabled="uploading" />
+          </label>
+          <input
+            v-model="slide.media_url"
+            placeholder="или ссылка (YouTube, VK, mp4…)"
+            class="min-w-0 flex-1 rounded-xs border border-line bg-surface px-3 py-2 text-[14px] text-content focus:border-accent focus:outline-none"
+          />
+        </div>
+        <p v-if="uploadError" class="text-[13px] text-pink">{{ uploadError }}</p>
+        <p class="text-[12px] text-muted">MP4, WebM или MOV до 200 МБ — либо вставьте ссылку на YouTube/VK.</p>
         <textarea
           v-model="slide.content"
           v-autosize
