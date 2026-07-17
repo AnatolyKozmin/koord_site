@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..database import get_db
 from ..deps import require_roles
-from ..models import Attempt, Block, BlockProgress, User, UserRole
+from ..models import Attempt, Block, BlockProgress, HomeworkCheck, User, UserRole
 from ..schemas import (
     BlockResult,
     CoordinatorResult,
@@ -44,6 +44,15 @@ def results(db: Session = Depends(get_db), _: User = Depends(trainer_only)):
         cur = best_status.get(key)
         if cur is None or _STATUS_RANK[a.status] > _STATUS_RANK[cur]:
             best_status[key] = a.status
+
+    # домашки: слайды опубликованных блоков с непустым заданием
+    hw_slide_ids = {
+        s.id for b in blocks for s in b.slides if s.homework.strip()
+    }
+    hw_done: dict[int, int] = {}
+    for c in db.scalars(select(HomeworkCheck)).all():
+        if c.slide_id in hw_slide_ids:
+            hw_done[c.user_id] = hw_done.get(c.user_id, 0) + 1
 
     out_coordinators = []
     for u in coordinators:
@@ -100,6 +109,7 @@ def results(db: Session = Depends(get_db), _: User = Depends(trainer_only)):
                 blocks_done=blocks_done,
                 slides_viewed=slides_viewed,
                 tests_passed=tests_passed,
+                homework_done=hw_done.get(u.id, 0),
                 overall_percent=round(pct_sum / len(blocks)) if blocks else 0,
                 per_block=per_block,
             )
@@ -108,4 +118,5 @@ def results(db: Session = Depends(get_db), _: User = Depends(trainer_only)):
     return ResultsOut(
         blocks=[ResultsBlockRef(id=b.id, title=b.title, kind=b.kind) for b in blocks],
         coordinators=out_coordinators,
+        homework_total=len(hw_slide_ids),
     )

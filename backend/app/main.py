@@ -9,7 +9,7 @@ from sqlalchemy import select
 from .config import settings
 from .database import Base, SessionLocal, engine
 from .models import User, UserRole
-from .routers import auth, blocks, media, results, users
+from .routers import auth, blocks, homework, media, results, users
 from .security import hash_password
 
 API_PREFIX = "/api"
@@ -30,9 +30,20 @@ def seed_admin() -> None:
             db.commit()
 
 
+def run_migrations() -> None:
+    """create_all создаёт только новые таблицы — недостающие колонки доливаем сами."""
+    with engine.begin() as conn:
+        slide_cols = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info(slides)")]
+        if slide_cols and "homework" not in slide_cols:
+            conn.exec_driver_sql(
+                "ALTER TABLE slides ADD COLUMN homework TEXT NOT NULL DEFAULT ''"
+            )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    run_migrations()
     seed_admin()
     yield
 
@@ -53,6 +64,7 @@ app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(blocks.router, prefix=API_PREFIX)
 app.include_router(results.router, prefix=API_PREFIX)
+app.include_router(homework.router, prefix=API_PREFIX)
 app.include_router(media.router, prefix=API_PREFIX)
 
 # статика загруженных картинок

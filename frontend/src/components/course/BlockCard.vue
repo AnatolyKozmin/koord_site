@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { BookOpen, FileCheck2, Award, Play, Pencil, EyeOff } from '@lucide/vue'
+import { BookOpen, FileCheck2, Award, Play, Pencil, EyeOff, ClipboardList } from '@lucide/vue'
 import { blockPercent, blockState, plural } from '../../data/blockStyle'
 
 const props = defineProps({
@@ -73,6 +73,10 @@ const state = computed(() => {
       </span>
       <span v-if="block.has_test" class="inline-flex items-center gap-1.5">
         <FileCheck2 :size="15" /> тест
+      </span>
+      <span v-if="block.homework_total" class="inline-flex items-center gap-1.5">
+        <ClipboardList :size="15" />
+        ДЗ {{ editable ? block.homework_total : (block.progress?.homework_done || 0) + '/' + block.homework_total }}
       </span>
       <span class="ml-auto font-semibold tabular-nums" :style="{ color: 'var(--c)' }">{{ pct }}%</span>
     </div>

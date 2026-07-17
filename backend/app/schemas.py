@@ -51,9 +51,13 @@ class UserUpdate(BaseModel):
 
 
 class SlideIn(BaseModel):
+    # id существующего слайда — чтобы при сохранении блока не пересоздавать
+    # слайды (иначе слетают отметки о проверке домашек)
+    id: int | None = None
     type: SlideType
     content: str = ""
     media_url: str | None = None
+    homework: str = ""
 
     @model_validator(mode="after")
     def check_media(self):
@@ -70,6 +74,11 @@ class SlideOut(BaseModel):
     type: SlideType
     content: str
     media_url: str | None
+    homework: str = ""
+    # зачтена ли домашка текущему пользователю (только в GET /blocks/{id})
+    homework_done: bool = False
+    # текст ответа текущего пользователя (только в GET /blocks/{id})
+    homework_answer: str = ""
 
 
 class BlockCreate(BaseModel):
@@ -91,6 +100,8 @@ class ProgressOut(BaseModel):
     viewed: bool = False
     # статус лучшей попытки теста: passed / pending_review / failed / None
     test_status: AttemptStatus | None = None
+    # сколько домашек этого блока зачтено пользователю
+    homework_done: int = 0
 
 
 class BlockListItem(BaseModel):
@@ -102,6 +113,7 @@ class BlockListItem(BaseModel):
     is_published: bool
     slide_count: int
     has_test: bool
+    homework_total: int = 0
     progress: ProgressOut
 
 
@@ -268,6 +280,7 @@ class CoordinatorResult(BaseModel):
     blocks_done: int
     slides_viewed: int
     tests_passed: int
+    homework_done: int = 0
     overall_percent: int
     per_block: list[BlockResult]
 
@@ -281,6 +294,49 @@ class ResultsBlockRef(BaseModel):
 class ResultsOut(BaseModel):
     blocks: list[ResultsBlockRef]
     coordinators: list[CoordinatorResult]
+    homework_total: int = 0
+
+
+# ---------- Домашки: проверка обучающими координаторами ----------
+
+
+class HomeworkItemOut(BaseModel):
+    slide_id: int
+    block_id: int
+    block_title: str
+    slide_position: int
+    homework: str
+
+
+class HomeworkAnswerOut(BaseModel):
+    slide_id: int
+    text: str
+    updated_at: datetime
+
+
+class HomeworkCoordinatorOut(BaseModel):
+    user_id: int
+    full_name: str
+    email: str
+    is_active: bool
+    checked_slide_ids: list[int]
+    answers: list[HomeworkAnswerOut] = []
+
+
+class HomeworkBoardOut(BaseModel):
+    items: list[HomeworkItemOut]
+    coordinators: list[HomeworkCoordinatorOut]
+
+
+class HomeworkCheckIn(BaseModel):
+    user_id: int
+    slide_id: int
+    done: bool
+
+
+class HomeworkAnswerIn(BaseModel):
+    slide_id: int
+    text: str = Field(min_length=1, max_length=10000)
 
 
 class MediaUploadOut(BaseModel):

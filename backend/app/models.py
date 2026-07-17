@@ -100,8 +100,50 @@ class Slide(Base):
     content: Mapped[str] = mapped_column(Text, default="")
     # media_url: /uploads/... для картинок или внешняя ссылка на видео
     media_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    # homework: текст домашнего задания к слайду; пусто — задания нет
+    homework: Mapped[str] = mapped_column(Text, default="")
 
     block: Mapped[Block] = relationship(back_populates="slides")
+    homework_checks: Mapped[list["HomeworkCheck"]] = relationship(
+        back_populates="slide", cascade="all, delete-orphan"
+    )
+    homework_submissions: Mapped[list["HomeworkSubmission"]] = relationship(
+        back_populates="slide", cascade="all, delete-orphan"
+    )
+
+
+class HomeworkSubmission(Base):
+    """Текстовый ответ координатора на домашку слайда."""
+
+    __tablename__ = "homework_submissions"
+    __table_args__ = (UniqueConstraint("user_id", "slide_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    slide_id: Mapped[int] = mapped_column(ForeignKey("slides.id"))
+    text: Mapped[str] = mapped_column(Text, default="")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=utcnow, onupdate=utcnow
+    )
+
+    slide: Mapped[Slide] = relationship(back_populates="homework_submissions")
+    user: Mapped[User] = relationship()
+
+
+class HomeworkCheck(Base):
+    """Отметка обучающего координатора: домашка слайда зачтена координатору."""
+
+    __tablename__ = "homework_checks"
+    __table_args__ = (UniqueConstraint("user_id", "slide_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    slide_id: Mapped[int] = mapped_column(ForeignKey("slides.id"))
+    checked_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    checked_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    slide: Mapped[Slide] = relationship(back_populates="homework_checks")
+    user: Mapped[User] = relationship(foreign_keys=[user_id])
 
 
 class Test(Base):

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { Users, GraduationCap, TrendingUp } from '@lucide/vue'
 import { api } from '../api/client'
+import ResultsTabs from '../components/course/ResultsTabs.vue'
 
 const data = ref({ blocks: [], coordinators: [] })
 const loading = ref(true)
@@ -54,6 +55,8 @@ onMounted(load)
       </p>
       <h1 class="mt-1.5 text-[28px]">Результаты</h1>
     </header>
+
+    <ResultsTabs />
 
     <p v-if="error" class="border-l-2 border-pink bg-pink/10 px-3 py-2 text-[13px] text-pink">{{ error }}</p>
 
@@ -128,6 +131,7 @@ onMounted(load)
           <span><b class="text-content">{{ c.blocks_done }}</b> из {{ data.blocks.length }} блоков</span>
           <span><b class="text-content">{{ c.slides_viewed }}</b> слайдов</span>
           <span><b class="text-content">{{ c.tests_passed }}</b> тестов</span>
+          <span v-if="data.homework_total"><b class="text-content">{{ c.homework_done }}</b> из {{ data.homework_total }} ДЗ</span>
         </div>
       </article>
     </section>

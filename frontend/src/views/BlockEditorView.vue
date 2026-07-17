@@ -36,10 +36,14 @@ async function load() {
       kind: data.kind,
       is_published: data.is_published,
     }
+    // id сохраняем: бэкенд обновляет существующие слайды, не пересоздавая их,
+    // чтобы не слетали отметки о проверке домашек
     slides.value = data.slides.map((s) => ({
+      id: s.id,
       type: s.type,
       content: s.content,
       media_url: s.media_url,
+      homework: s.homework || '',
     }))
   } catch (e) {
     error.value = e.response?.data?.detail || 'Блок не найден'
@@ -88,7 +92,7 @@ async function removeBlock() {
 }
 
 function addSlide() {
-  slides.value.push({ type: 'text', content: '', media_url: null })
+  slides.value.push({ id: null, type: 'text', content: '', media_url: null, homework: '' })
 }
 function move(i, dir) {
   const j = i + dir
@@ -138,9 +142,10 @@ onMounted(load)
           <span class="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Описание</span>
           <textarea
             v-model="form.description"
+            v-autosize
             rows="2"
             placeholder="О чём этот блок"
-            class="w-full resize-y rounded-xs border border-line bg-surface px-3.5 py-3 text-[15px] text-content focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+            class="w-full rounded-xs border border-line bg-surface px-3.5 py-3 text-[15px] text-content focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
           ></textarea>
         </label>
         <div>

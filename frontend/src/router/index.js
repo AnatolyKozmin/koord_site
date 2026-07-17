@@ -39,6 +39,12 @@ const routes = [
     meta: { roles: EDITOR_ROLES },
   },
   {
+    path: '/results/homework',
+    name: 'homework',
+    component: () => import('../views/HomeworkView.vue'),
+    meta: { roles: EDITOR_ROLES },
+  },
+  {
     path: '/users',
     name: 'users',
     component: () => import('../views/UsersView.vue'),

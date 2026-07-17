@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { Type, Image as ImageIcon, Video, ArrowUp, ArrowDown, Trash2, Upload } from '@lucide/vue'
+import { Type, Image as ImageIcon, Video, ArrowUp, ArrowDown, Trash2, Upload, ClipboardList, X } from '@lucide/vue'
 import { api } from '../../api/client'
 
 const props = defineProps({
@@ -12,6 +12,12 @@ const emit = defineEmits(['remove', 'move-up', 'move-down'])
 
 const uploading = ref(false)
 const uploadError = ref('')
+const showHomework = ref(!!props.slide.homework)
+
+function removeHomework() {
+  props.slide.homework = ''
+  showHomework.value = false
+}
 
 const types = [
   { key: 'text', label: 'Текст', icon: Type },
@@ -88,9 +94,10 @@ async function onFile(e) {
       <textarea
         v-if="slide.type === 'text'"
         v-model="slide.content"
+        v-autosize
         rows="4"
         placeholder="Текст слайда…"
-        class="w-full resize-y rounded-xs border border-line bg-surface px-3 py-2.5 text-[15px] text-content focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+        class="w-full rounded-xs border border-line bg-surface px-3 py-2.5 text-[15px] text-content focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
       ></textarea>
 
       <!-- картинка -->
@@ -112,11 +119,13 @@ async function onFile(e) {
           />
         </div>
         <p v-if="uploadError" class="text-[13px] text-pink">{{ uploadError }}</p>
-        <input
+        <textarea
           v-model="slide.content"
+          v-autosize
+          rows="1"
           placeholder="Подпись (необязательно)"
           class="w-full rounded-xs border border-line bg-surface px-3 py-2 text-[14px] text-content focus:border-accent focus:outline-none"
-        />
+        ></textarea>
       </template>
 
       <!-- видео -->
@@ -126,12 +135,47 @@ async function onFile(e) {
           placeholder="Ссылка на видео (YouTube, VK, mp4…)"
           class="w-full rounded-xs border border-line bg-surface px-3 py-2.5 text-[15px] text-content focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
-        <input
+        <textarea
           v-model="slide.content"
+          v-autosize
+          rows="1"
           placeholder="Подпись (необязательно)"
           class="w-full rounded-xs border border-line bg-surface px-3 py-2 text-[14px] text-content focus:border-accent focus:outline-none"
-        />
+        ></textarea>
       </template>
+
+      <!-- домашнее задание -->
+      <button
+        v-if="!showHomework"
+        class="inline-flex items-center gap-2 self-start border border-dashed border-line px-3 py-2 text-[13px] text-muted transition-colors hover:border-accent/50 hover:text-accent"
+        @click="showHomework = true"
+      >
+        <ClipboardList :size="15" /> Добавить домашнее задание
+      </button>
+      <div v-else class="flex flex-col gap-2 border border-line bg-surface-2/40 p-3">
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
+            <ClipboardList :size="14" /> Домашнее задание
+          </span>
+          <button
+            class="flex h-7 w-7 items-center justify-center text-muted transition-colors hover:text-pink"
+            title="Убрать домашку"
+            @click="removeHomework"
+          >
+            <X :size="15" />
+          </button>
+        </div>
+        <textarea
+          v-model="slide.homework"
+          v-autosize
+          rows="3"
+          placeholder="Что нужно сделать после этого слайда…"
+          class="w-full rounded-xs border border-line bg-surface px-3 py-2.5 text-[14px] text-content focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+        ></textarea>
+        <p class="text-[12px] text-muted">
+          Координатор ответит текстом под слайдом, а вы проверите на вкладке «Домашки».
+        </p>
+      </div>
     </div>
   </div>
 </template>

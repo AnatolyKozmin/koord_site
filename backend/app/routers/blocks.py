@@ -9,6 +9,8 @@ from ..models import (
     AttemptStatus,
     Block,
     BlockProgress,
+    HomeworkCheck,
+    HomeworkSubmission,
     Slide,
     User,
     UserRole,
@@ -51,6 +53,21 @@ def best_test_status(db: Session, user_id: int, test_id: int) -> AttemptStatus |
     return max(statuses, key=lambda s: _STATUS_RANK[s])
 
 
+def _checked_slide_ids(db: Session, user_id: int, block: Block) -> set[int]:
+    """id слайдов блока, за которые пользователю зачтена домашка."""
+    slide_ids = [s.id for s in block.slides if s.homework.strip()]
+    if not slide_ids:
+        return set()
+    return set(
+        db.scalars(
+            select(HomeworkCheck.slide_id).where(
+                HomeworkCheck.user_id == user_id,
+                HomeworkCheck.slide_id.in_(slide_ids),
+            )
+        ).all()
+    )
+
+
 def _progress_for(db: Session, user: User, block: Block) -> ProgressOut:
     prog = db.scalar(
         select(BlockProgress).where(
@@ -62,6 +79,7 @@ def _progress_for(db: Session, user: User, block: Block) -> ProgressOut:
         last_slide=prog.last_slide if prog else 0,
         viewed=prog.viewed if prog else False,
         test_status=test_status,
+        homework_done=len(_checked_slide_ids(db, user.id, block)),
     )
 
 
@@ -75,6 +93,7 @@ def _to_list_item(db: Session, user: User, block: Block) -> BlockListItem:
         is_published=block.is_published,
         slide_count=len(block.slides),
         has_test=block.test is not None,
+        homework_total=sum(1 for s in block.slides if s.homework.strip()),
         progress=_progress_for(db, user, block),
     )
 
@@ -127,10 +146,24 @@ def get_block(
 ):
     block = _get_block(db, block_id, user)
     item = _to_list_item(db, user, block)
-    return BlockDetail(
-        **item.model_dump(),
-        slides=[SlideOut.model_validate(s) for s in block.slides],
-    )
+    checked = _checked_slide_ids(db, user.id, block)
+    slide_ids = [s.id for s in block.slides]
+    my_answers = {
+        sub.slide_id: sub.text
+        for sub in db.scalars(
+            select(HomeworkSubmission).where(
+                HomeworkSubmission.user_id == user.id,
+                HomeworkSubmission.slide_id.in_(slide_ids),
+            )
+        ).all()
+    } if slide_ids else {}
+    slides = []
+    for s in block.slides:
+        out = SlideOut.model_validate(s)
+        out.homework_done = s.id in checked
+        out.homework_answer = my_answers.get(s.id, "")
+        slides.append(out)
+    return BlockDetail(**item.model_dump(), slides=slides)
 
 
 @router.patch("/{block_id}", response_model=BlockListItem)
@@ -166,19 +199,22 @@ def replace_slides(
     db: Session = Depends(get_db),
     user: User = Depends(editor_only),
 ):
-    """Полностью заменяет слайды блока — так проще редактировать и переставлять."""
+    """Заменяет набор слайдов блока. Существующие слайды (по id) обновляются,
+    а не пересоздаются — иначе слетали бы отметки о проверке домашек."""
     block = _get_block(db, block_id, user)
-    block.slides.clear()
-    db.flush()
-    for i, slide in enumerate(body):
-        block.slides.append(
-            Slide(
-                position=i,
-                type=slide.type,
-                content=slide.content,
-                media_url=slide.media_url,
-            )
-        )
+    existing = {s.id: s for s in block.slides}
+    for i, data in enumerate(body):
+        slide = existing.pop(data.id, None) if data.id else None
+        if slide is None:
+            slide = Slide(block_id=block.id)
+            db.add(slide)
+        slide.position = i
+        slide.type = data.type
+        slide.content = data.content
+        slide.media_url = data.media_url
+        slide.homework = data.homework
+    for leftover in existing.values():
+        db.delete(leftover)  # каскадом удаляет и homework_checks
     db.commit()
     db.refresh(block)
     return [SlideOut.model_validate(s) for s in block.slides]
