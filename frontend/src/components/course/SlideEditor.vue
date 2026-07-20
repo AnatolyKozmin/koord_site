@@ -158,7 +158,7 @@ async function onFile(e, endpoint) {
           />
         </div>
         <p v-if="uploadError" class="text-[13px] text-pink">{{ uploadError }}</p>
-        <p class="text-[12px] text-muted">MP4, WebM или MOV до 200 МБ — либо вставьте ссылку на YouTube/VK.</p>
+        <p class="text-[12px] text-muted">MP4, WebM или MOV до 2 ГБ — либо вставьте ссылку на YouTube/VK.</p>
         <textarea
           v-model="slide.content"
           v-autosize

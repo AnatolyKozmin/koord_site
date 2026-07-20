@@ -29,7 +29,7 @@ VIDEO_ALLOWED = {
     "video/webm": ".webm",
     "video/quicktime": ".mov",
 }
-VIDEO_MAX_BYTES = 200 * 1024 * 1024  # 200 МБ
+VIDEO_MAX_BYTES = 2048 * 1024 * 1024  # 2 ГБ
 CHUNK = 1024 * 1024
 
 
@@ -78,7 +78,7 @@ async def upload_video(
                 if size > VIDEO_MAX_BYTES:
                     raise HTTPException(
                         status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                        detail="Видео больше 200 МБ",
+                        detail="Видео больше 2 ГБ",
                     )
                 out.write(chunk)
     except Exception:

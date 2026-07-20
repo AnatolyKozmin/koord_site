@@ -100,12 +100,24 @@ docker run --rm -v koord26_data:/data -v "$PWD":/backup alpine \
 
 ## Заметки
 
-- Загрузка видео (до 200 МБ) требует `client_max_body_size 210M;` в **двух**
-  местах: во фронт-контейнере (`frontend/nginx.conf`, уже в репо) и в edge-nginx
-  на сервере — в `~/infra/nginx.conf` в блоке `server_name koordinatorstvo2026.ru`
-  поставить `client_max_body_size 210M;` (было 10M) и применить
-  `docker exec arkadium-edge-nginx nginx -s reload`. Иначе edge вернёт 413 ещё
-  до нашего стека. Заодно там же стоит поднять `proxy_read_timeout`/
-  `proxy_send_timeout` до 300s, если загрузка по медленной сети обрывается.
+- Загрузка видео (до 2 ГБ) требует согласованных лимитов в **трёх** местах:
+  бэкенд (`VIDEO_MAX_BYTES` в `media.py` = 2 ГБ), фронт-контейнер
+  (`frontend/nginx.conf`, `client_max_body_size 2100M`, уже в репо) и edge-nginx
+  на сервере. В `~/infra/nginx.conf`, блок `server_name koordinatorstvo2026.ru`,
+  прописать (было 10M):
+  ```nginx
+  client_max_body_size 2100M;
+  location / {
+      # ...proxy_pass фронту...
+      proxy_request_buffering off;   # стримим гигабайты, не буферизируя на диск edge
+      proxy_send_timeout 1800s;
+      proxy_read_timeout 1800s;
+  }
+  ```
+  Применить: `docker exec arkadium-edge-nginx nginx -t && docker exec
+  arkadium-edge-nginx nginx -s reload` (в `~/infra` **не** `compose up`). Без
+  этого edge вернёт 413 ещё до нашего стека.
+- Видео лежат в томе `koord26_data` (`/app/data/uploads`) — при файлах на
+  гигабайты следить за свободным местом на диске сервера.
 - Порты наружу не публикуются — только через edge-nginx.
 - Откат: вернуть строку `koord-hr-frontend`, `nginx -s reload`, поднять `~/otbor_k`.
