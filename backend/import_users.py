@@ -16,13 +16,25 @@
 """
 
 import json
+import os
 import sys
 
+import bcrypt
 from sqlalchemy import select
 
 from app.database import Base, SessionLocal, engine
 from app.models import User, UserRole
-from app.security import hash_password
+
+# Стоимость bcrypt. Для разовой массовой заливки на слабом vCPU можно снизить
+# (rounds=10 безопасно), т.к. хеш самоописываемый и verify работает при любом cost.
+ROUNDS = int(os.environ.get("IMPORT_BCRYPT_ROUNDS", "12"))
+# Коммит батчами: прогресс сохраняется по ходу и виден в счётчике, а прерывание
+# не теряет уже залитых (повторный запуск идемпотентен).
+BATCH = 25
+
+
+def hash_pw(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=ROUNDS)).decode()
 
 
 def ensure_team_column() -> None:
@@ -43,12 +55,13 @@ def main() -> None:
 
     created = 0
     skipped = 0
+    pending = 0
     with SessionLocal() as db:
         existing = {e.lower() for e in db.scalars(select(User.email)).all()}
         for r in records:
             email = (r["email"] or "").strip()
             if not email:
-                print(f"  ПРОПУСК (нет email): {r.get('full_name')!r}")
+                print(f"  ПРОПУСК (нет email): {r.get('full_name')!r}", flush=True)
                 skipped += 1
                 continue
             if email.lower() in existing:
@@ -58,18 +71,25 @@ def main() -> None:
                 User(
                     email=email,
                     full_name=(r["full_name"] or "").strip(),
-                    hashed_password=hash_password(r["password"]),
+                    hashed_password=hash_pw(r["password"]),
                     role=UserRole(r.get("role", "coordinator")),
                     team=(r.get("team") or None),
                 )
             )
             existing.add(email.lower())
             created += 1
-        db.commit()
+            pending += 1
+            if pending >= BATCH:
+                db.commit()
+                pending = 0
+                print(f"  ...закоммичено {created}", flush=True)
+        if pending:
+            db.commit()
 
     print(
         f"Готово. Создано: {created}, пропущено (уже были/без email): {skipped}, "
-        f"всего в файле: {len(records)}"
+        f"всего в файле: {len(records)} (bcrypt rounds={ROUNDS})",
+        flush=True,
     )
 
 
