@@ -40,6 +40,7 @@ def create_user(
         full_name=body.full_name,
         hashed_password=hash_password(body.password),
         role=body.role,
+        team=body.team,
     )
     db.add(user)
     db.commit()
@@ -70,6 +71,8 @@ def update_user(
         user.role = body.role
     if body.is_active is not None:
         user.is_active = body.is_active
+    if body.team is not None:
+        user.team = body.team
     db.commit()
     db.refresh(user)
     return user

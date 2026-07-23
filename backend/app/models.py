@@ -43,6 +43,8 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = enum_column(UserRole, default=UserRole.COORDINATOR)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # направление/факультет координатора (для группировки), может быть пустым
+    team: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 

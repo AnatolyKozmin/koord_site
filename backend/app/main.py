@@ -38,6 +38,9 @@ def run_migrations() -> None:
             conn.exec_driver_sql(
                 "ALTER TABLE slides ADD COLUMN homework TEXT NOT NULL DEFAULT ''"
             )
+        user_cols = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info(users)")]
+        if user_cols and "team" not in user_cols:
+            conn.exec_driver_sql("ALTER TABLE users ADD COLUMN team VARCHAR(255)")
 
 
 @asynccontextmanager

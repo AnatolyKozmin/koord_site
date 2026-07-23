@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY seed.py .
+COPY import_users.py .
 
 # БД и загрузки живут в /app/data (том), путь задаётся через env в compose
 EXPOSE 8000

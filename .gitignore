@@ -4,6 +4,11 @@
 !.env.example
 backend/.env
 
+# --- данные с паролями (НЕ коммитить) ---
+*.xlsx
+backend/users_seed.json
+scratch_dump.json
+
 # --- Python / backend ---
 .venv/
 __pycache__/

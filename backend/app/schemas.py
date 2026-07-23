@@ -30,6 +30,7 @@ class UserOut(BaseModel):
     full_name: str
     role: UserRole
     is_active: bool
+    team: str | None = None
     created_at: datetime
 
 
@@ -38,6 +39,7 @@ class UserCreate(BaseModel):
     full_name: str = Field(min_length=1, max_length=255)
     password: str = Field(min_length=6)
     role: UserRole = UserRole.COORDINATOR
+    team: str | None = Field(default=None, max_length=255)
 
 
 class UserUpdate(BaseModel):
@@ -45,6 +47,7 @@ class UserUpdate(BaseModel):
     password: str | None = Field(default=None, min_length=6)
     role: UserRole | None = None
     is_active: bool | None = None
+    team: str | None = Field(default=None, max_length=255)
 
 
 # ---------- Блоки и слайды ----------
