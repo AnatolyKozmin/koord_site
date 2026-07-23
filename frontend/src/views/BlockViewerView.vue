@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ChevronLeft, ChevronRight, ChevronDown, Check, ClipboardList } from '@lucide/vue'
 import { api } from '../api/client'
+import { videoEmbed } from '../utils/videoEmbed'
 
 const route = useRoute()
 const router = useRouter()
@@ -47,11 +48,6 @@ async function sendAnswer(s) {
   } finally {
     hwSending.value[s.id] = false
   }
-}
-
-function youtubeEmbed(url) {
-  const m = url?.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]+)/)
-  return m ? `https://www.youtube.com/embed/${m[1]}` : null
 }
 
 async function load() {
@@ -166,9 +162,10 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
             <template v-else>
               <div class="w-full">
                 <iframe
-                  v-if="youtubeEmbed(s.media_url)"
-                  :src="youtubeEmbed(s.media_url)"
+                  v-if="videoEmbed(s.media_url)"
+                  :src="videoEmbed(s.media_url)"
                   class="aspect-video w-full border border-line"
+                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                   allowfullscreen
                 ></iframe>
                 <video v-else :src="s.media_url" controls class="w-full border border-line"></video>
