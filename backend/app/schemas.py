@@ -280,6 +280,7 @@ class CoordinatorResult(BaseModel):
     full_name: str
     email: str
     is_active: bool
+    team: str | None = None
     blocks_done: int
     slides_viewed: int
     tests_passed: int

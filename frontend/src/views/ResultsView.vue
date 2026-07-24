@@ -7,6 +7,24 @@ import ResultsTabs from '../components/course/ResultsTabs.vue'
 const data = ref({ blocks: [], coordinators: [] })
 const loading = ref(true)
 const error = ref('')
+const selectedTeam = ref(null) // null = все факультеты
+
+// список факультетов с числом координаторов, отсортирован по-русски
+const teams = computed(() => {
+  const counts = {}
+  for (const c of data.value.coordinators) {
+    if (c.team) counts[c.team] = (counts[c.team] || 0) + 1
+  }
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+})
+
+const visibleCoordinators = computed(() =>
+  selectedTeam.value
+    ? data.value.coordinators.filter((c) => c.team === selectedTeam.value)
+    : data.value.coordinators,
+)
 
 const ELECTIVE = ['#ff87ab', '#f58414', '#fccf50', '#b1aaff']
 
@@ -20,8 +38,9 @@ const accentByBlock = computed(() => {
   return map
 })
 
+// сводка считается по выбранному факультету (или по всем)
 const summary = computed(() => {
-  const cs = data.value.coordinators
+  const cs = visibleCoordinators.value
   const avg = cs.length ? Math.round(cs.reduce((s, c) => s + c.overall_percent, 0) / cs.length) : 0
   const active = cs.filter((c) => c.overall_percent > 0).length
   return { count: cs.length, avg, active }
@@ -60,6 +79,26 @@ onMounted(load)
 
     <p v-if="error" class="border-l-2 border-pink bg-pink/10 px-3 py-2 text-[13px] text-pink">{{ error }}</p>
 
+    <!-- фильтр по факультетам -->
+    <div v-if="!loading && teams.length" class="flex flex-wrap gap-2">
+      <button
+        class="border border-line px-3 py-1.5 text-[13px] font-medium transition-colors"
+        :class="selectedTeam === null ? 'bg-accent text-on-accent' : 'text-muted hover:text-content'"
+        @click="selectedTeam = null"
+      >
+        Все <span class="tabular-nums opacity-70">{{ data.coordinators.length }}</span>
+      </button>
+      <button
+        v-for="t in teams"
+        :key="t.name"
+        class="border border-line px-3 py-1.5 text-[13px] font-medium transition-colors"
+        :class="selectedTeam === t.name ? 'bg-accent text-on-accent' : 'text-muted hover:text-content'"
+        @click="selectedTeam = t.name"
+      >
+        {{ t.name }} <span class="tabular-nums opacity-70">{{ t.count }}</span>
+      </button>
+    </div>
+
     <!-- сводка -->
     <section v-if="!loading" class="grid grid-cols-3 gap-3">
       <div class="border border-line bg-surface p-3.5">
@@ -85,16 +124,16 @@ onMounted(load)
     </div>
 
     <div
-      v-else-if="!data.coordinators.length"
+      v-else-if="!visibleCoordinators.length"
       class="border border-dashed border-line bg-surface p-8 text-center text-[15px] text-muted"
     >
-      Пока нет координаторов для отслеживания.
+      {{ selectedTeam ? `Нет координаторов на факультете «${selectedTeam}».` : 'Пока нет координаторов для отслеживания.' }}
     </div>
 
     <!-- список координаторов -->
     <section v-else class="flex flex-col gap-3">
       <article
-        v-for="c in data.coordinators"
+        v-for="c in visibleCoordinators"
         :key="c.user_id"
         class="border border-line bg-surface p-4"
         :class="!c.is_active && 'opacity-60'"
@@ -106,6 +145,7 @@ onMounted(load)
           <div class="min-w-0 flex-1">
             <p class="truncate font-semibold">{{ c.full_name }}</p>
             <p class="truncate text-[13px] text-muted">{{ c.email }}</p>
+            <span v-if="c.team" class="mt-1 inline-block bg-surface-2 px-1.5 py-0.5 text-[11px] font-medium text-muted">{{ c.team }}</span>
           </div>
           <div class="text-right">
             <p class="font-display text-[22px] font-bold leading-none tabular-nums text-accent">{{ c.overall_percent }}%</p>

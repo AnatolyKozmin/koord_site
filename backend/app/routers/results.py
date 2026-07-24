@@ -106,6 +106,7 @@ def results(db: Session = Depends(get_db), _: User = Depends(trainer_only)):
                 full_name=u.full_name,
                 email=u.email,
                 is_active=u.is_active,
+                team=u.team,
                 blocks_done=blocks_done,
                 slides_viewed=slides_viewed,
                 tests_passed=tests_passed,
