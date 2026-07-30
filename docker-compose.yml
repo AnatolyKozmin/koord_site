@@ -21,6 +21,9 @@ services:
     restart: unless-stopped
     depends_on:
       - koord26-backend
+    volumes:
+      # только чтение: nginx сам отдаёт /api/uploads/* из тома бэкенда
+      - koord26_data:/srv:ro
     networks:
       - koord26          # общение с backend по DNS-имени koord26-backend
       - arkadium_shared  # чтобы edge-nginx видел koord26-frontend:80

@@ -168,7 +168,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                   allowfullscreen
                 ></iframe>
-                <video v-else :src="s.media_url" controls class="w-full border border-line"></video>
+                <!-- max-h: вертикальные видео с телефона иначе не влезают в экран -->
+                <video
+                  v-else
+                  :src="s.media_url"
+                  controls
+                  class="mx-auto max-h-[70vh] w-full border border-line bg-black object-contain"
+                ></video>
               </div>
               <p v-if="s.content" class="text-center text-[14px] text-muted">{{ s.content }}</p>
             </template>

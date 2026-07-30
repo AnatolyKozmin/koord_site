@@ -28,6 +28,12 @@ dist/
 dist-ssr/
 *.local
 
+# --- исходники видео для курса: гигабайты, не место в git ---
+/Курс НПБ/
+*.MOV
+*.mov
+*.mp4
+
 # --- редакторы / ОС ---
 .vscode/*
 !.vscode/extensions.json
