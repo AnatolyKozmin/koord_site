@@ -15,6 +15,24 @@ const busy = ref({})
 
 const checked = ref({}) // user_id -> Set(slide_id)
 const answers = ref({}) // user_id -> { slide_id -> {text, updated_at} }
+const selectedTeam = ref(null) // null = все факультеты
+
+// список факультетов с числом координаторов, отсортирован по-русски
+const teams = computed(() => {
+  const counts = {}
+  for (const c of coordinators.value) {
+    if (c.team) counts[c.team] = (counts[c.team] || 0) + 1
+  }
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+})
+
+const visibleCoordinators = computed(() =>
+  selectedTeam.value
+    ? coordinators.value.filter((c) => c.team === selectedTeam.value)
+    : coordinators.value,
+)
 
 async function load() {
   loading.value = true
@@ -75,8 +93,13 @@ function initials(name) {
   return (p[0]?.[0] || '') + (p[1]?.[0] || '') || '?'
 }
 
+// считается по выбранному факультету (или по всем)
 const totalDone = computed(() =>
-  coordinators.value.reduce((s, c) => s + doneCount(c.user_id), 0),
+  visibleCoordinators.value.reduce((s, c) => s + doneCount(c.user_id), 0),
+)
+
+const totalPending = computed(() =>
+  visibleCoordinators.value.reduce((s, c) => s + pendingCount(c.user_id), 0),
 )
 
 onMounted(load)
@@ -108,20 +131,41 @@ onMounted(load)
     </div>
 
     <template v-else>
-      <p class="-mt-2 text-[13px] text-muted">
-        {{ items.length }} заданий в курсе · {{ totalDone }} отметок о зачёте
+      <!-- фильтр по факультетам -->
+      <div v-if="teams.length" class="-mt-2 flex flex-wrap gap-2">
+        <button
+          class="border border-line px-3 py-1.5 text-[13px] font-medium transition-colors"
+          :class="selectedTeam === null ? 'bg-accent text-on-accent' : 'text-muted hover:text-content'"
+          @click="selectedTeam = null"
+        >
+          Все <span class="tabular-nums opacity-70">{{ coordinators.length }}</span>
+        </button>
+        <button
+          v-for="t in teams"
+          :key="t.name"
+          class="border border-line px-3 py-1.5 text-[13px] font-medium transition-colors"
+          :class="selectedTeam === t.name ? 'bg-accent text-on-accent' : 'text-muted hover:text-content'"
+          @click="selectedTeam = t.name"
+        >
+          {{ t.name }} <span class="tabular-nums opacity-70">{{ t.count }}</span>
+        </button>
+      </div>
+
+      <p class="text-[13px] text-muted" :class="!teams.length && '-mt-2'">
+        {{ items.length }} заданий в курсе · {{ totalDone }} отметок о зачёте<template v-if="totalPending"> ·
+          <span class="font-semibold text-orange">{{ totalPending }} ждёт проверки</span></template>
       </p>
 
       <div
-        v-if="!coordinators.length"
+        v-if="!visibleCoordinators.length"
         class="border border-dashed border-line bg-surface p-8 text-center text-[15px] text-muted"
       >
-        Пока нет координаторов для проверки.
+        {{ selectedTeam ? `Нет координаторов на факультете «${selectedTeam}».` : 'Пока нет координаторов для проверки.' }}
       </div>
 
       <section v-else class="flex flex-col gap-3">
         <article
-          v-for="c in coordinators"
+          v-for="c in visibleCoordinators"
           :key="c.user_id"
           class="border border-line bg-surface"
           :class="!c.is_active && 'opacity-60'"
@@ -134,6 +178,7 @@ onMounted(load)
             <div class="min-w-0 flex-1">
               <p class="truncate font-semibold">{{ c.full_name }}</p>
               <p class="truncate text-[13px] text-muted">{{ c.email }}</p>
+              <span v-if="c.team" class="mt-1 inline-block bg-surface-2 px-1.5 py-0.5 text-[11px] font-medium text-muted">{{ c.team }}</span>
               <p v-if="pendingCount(c.user_id)" class="mt-0.5 text-[12px] font-semibold text-orange">
                 {{ pendingCount(c.user_id) }} ждёт проверки
               </p>

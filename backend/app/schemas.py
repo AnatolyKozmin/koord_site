@@ -323,6 +323,7 @@ class HomeworkCoordinatorOut(BaseModel):
     full_name: str
     email: str
     is_active: bool
+    team: str | None = None
     checked_slide_ids: list[int]
     answers: list[HomeworkAnswerOut] = []
 

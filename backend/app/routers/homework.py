@@ -68,6 +68,7 @@ def homework_board(db: Session = Depends(get_db), _: User = Depends(trainer_only
                 full_name=u.full_name,
                 email=u.email,
                 is_active=u.is_active,
+                team=u.team,
                 checked_slide_ids=checks.get(u.id, []),
                 answers=answers.get(u.id, []),
             )
