@@ -97,8 +97,8 @@ onMounted(load)
 
     <template v-else>
       <p class="-mt-3 max-w-prose text-[15px] text-muted">
-        Сначала — общая теория. Затем выбираешь блок на прокачку: один обязателен,
-        остальные — по желанию.
+        Сначала — общая теория. Затем блоки на прокачку: открыты все, проходи в любом
+        порядке. Минимум один нужно завершить, но можно и все.
       </p>
 
       <section v-if="theory.length" class="flex flex-col gap-4">
@@ -116,7 +116,7 @@ onMounted(load)
       <section v-if="electives.length">
         <div class="mb-3 flex items-baseline justify-between">
           <h2 class="text-[17px]">Блоки на выбор</h2>
-          <span class="text-[13px] text-muted">1 обязателен · остальные по желанию</span>
+          <span class="text-[13px] text-muted">открыты все · минимум 1 для зачёта</span>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
           <BlockCard
